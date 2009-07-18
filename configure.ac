@@ -1,0 +1,34 @@
+AC_PREREQ(2.53)
+AC_INIT(omgps, 0.1)
+AM_INIT_AUTOMAKE
+
+AC_CONFIG_SRCDIR(src)
+AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
+
+AC_ISC_POSIX
+AC_PROG_CC
+AC_PROG_CC_STDC
+AC_STDC_HEADERS
+AC_PROG_LIBTOOL
+
+AC_CHECK_HEADERS([sys/capability.h])
+
+##
+## check python
+##
+
+AM_PATH_PYTHON
+
+##
+## other dependencies
+##
+
+PKG_CHECK_MODULES(DEPENDENCIES,	[gtk+-2.0] [gthread-2.0] [dbus-glib-1] [pygobject-2.0])
+
+AC_SUBST(DEPS_CFLAGS)
+AC_SUBST(DEPS_LIBS)
+
+AC_SUBST(DEPENDENCIES)
+
+AC_OUTPUT([Makefile])

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=omgps
+Comment=GPS for Openmoko Freerunner
+Encoding=UTF-8
+Type=Application
+Exec=omgps -log2file
+Terminal=false
+Categories=GTK;Utilities;Applications;
+X-MB-SingleInstance=true
+Icon=omgps/omgps.png
