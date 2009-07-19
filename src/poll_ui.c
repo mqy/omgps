@@ -33,8 +33,6 @@ static int x = 0, y = 0, r = 0;
 static GdkRectangle last_rect;
 static gboolean last_rect_valid = FALSE;
 
-static int last_heading = -1;
-static int lastx = 0, lasty = 0;
 static char speed_unit_sign;
 
 static point_t cursor_range_tl, cursor_range_br;
@@ -51,10 +49,6 @@ typedef struct __nav_da_data_t
 
 static nav_da_data_t nav_da_data[3];
 
-#define RESET_HEADING() \
-	lastx = lasty = 0;	\
-	last_heading = -1;	\
-
 /**
  * Heading == -1 means just clear previous
  */
@@ -65,40 +59,27 @@ static void draw_speed_heading(int heading)
 	#define HEADING_H_HALF	(HEADING_HEIGHT >> 1)
 	#define HEADING_R 		(MIN(HEADING_W_HALF, HEADING_H_HALF) - 6)
 
-	if (heading == last_heading)
-		return;
-
-	if (lastx > 0) {
-		/* clear previous */
-		gdk_draw_line(heading_da->window, g_context.heading_gc,
-			HEADING_W_HALF, HEADING_H_HALF, lastx, lasty);
-		RESET_HEADING();
-	}
-
-	/* degree 0 points to true north. headings respect to north, clockwise */
-	if (heading >= 0) {
-		float rad = heading * DEG_TO_RAD;
-		lastx = (int)(HEADING_W_HALF + HEADING_R * sin(rad));
-		lasty = (int)(HEADING_H_HALF - HEADING_R * cos(rad));
-		gdk_draw_line(heading_da->window, g_context.heading_gc,
-			HEADING_W_HALF, HEADING_H_HALF, lastx, lasty);
-
-		last_heading = heading;
-	}
-}
-
-static gboolean heading_da_expose_event (GtkWidget *widget, GdkEventExpose *evt, gpointer data)
-{
-	if (! GTK_WIDGET_DRAWABLE(heading_da))
-		return TRUE;
+	GdkGC *gc = nav_da->style->bg_gc[GTK_WIDGET_STATE(nav_da)];
+	gdk_draw_rectangle (heading_da->window, gc, TRUE, 0, 0, HEADING_WIDTH, HEADING_HEIGHT);
 
 	gdk_draw_pixbuf (heading_da->window, g_context.drawingarea_bggc,
 		g_xpm_images[XPM_ID_POSITION_HEADING].pixbuf,
 		0, 0, 0, 0, HEADING_WIDTH, HEADING_HEIGHT,
 		GDK_RGB_DITHER_NONE, -1, -1);
 
-	RESET_HEADING();
+	/* degree 0 points to true north. headings respect to north, clockwise */
+	if (heading >= 0) {
+		float rad = heading * DEG_TO_RAD;
+		int x = (int)(HEADING_W_HALF + HEADING_R * sin(rad));
+		int y = (int)(HEADING_H_HALF - HEADING_R * cos(rad));
+		gdk_draw_line(heading_da->window, g_context.heading_gc,
+			HEADING_W_HALF, HEADING_H_HALF, x, y);
+	}
+}
 
+static gboolean heading_da_expose_event (GtkWidget *widget, GdkEventExpose *evt, gpointer data)
+{
+	draw_speed_heading(-1);
 	return TRUE;
 }
 
@@ -314,11 +295,7 @@ static gboolean nav_da_expose_event (GtkWidget *widget, GdkEventExpose *evt, gpo
 {
 	int i;
 	for (i=0; i<3; i++) {
-		if (POLL_STATE_TEST(STARTING)) {
-			nav_da_data[i].hash = nav_da_data[i].last_hash = INVALID_HASH;
-		} else {
-			nav_da_data[i].hash = 0;
-		}
+		nav_da_data[i].hash = 0;
 		draw_labels(&nav_da_data[i]);
 	}
 	return FALSE;
@@ -374,7 +351,7 @@ void poll_update_ui()
 
 	if (da_data->hash != da_data->last_hash) {
 		draw_labels(da_data);
-		draw_speed_heading((da_data->hash > 0 && speed_2d > 0.1)? (int)g_gpsdata.heading_2d : -1);
+		draw_speed_heading((da_data->hash > 0 && speed_2d > 0.2)? (int)g_gpsdata.heading_2d : -1);
 	}
 
 	/* sv */

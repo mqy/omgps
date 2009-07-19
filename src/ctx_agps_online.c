@@ -206,7 +206,7 @@ void set_initial_aid_data()
 	int i;
 	for (i=0; i<sizeof(files)/sizeof(char *); i++) {
 		if (stat(files[i], &st) == 0 && st.st_mtim.tv_sec + intervals[i] >= time.tv_sec)
-			ret = ret || set_aid_data(files[i], st.st_size);
+			ret = set_aid_data(files[i], st.st_size) || ret;
 	}
 
 END:
